@@ -110,6 +110,12 @@ def aStarSearch(problem, heuristic=nullHeuristic):
         print("Start's successors:", problem.getSuccessors(problem.getStartState()))
         """
     "*** YOUR CODE HERE ***"
+    def find_pos(pos, lst):
+        for node in lst:
+            if node.pos == pos:
+                return node
+        else:
+            return None
 
     node_start = Node()
     node_start.pos = problem.getStartState()
@@ -124,6 +130,7 @@ def aStarSearch(problem, heuristic=nullHeuristic):
 
     while open_list:
         node_current = min(open_list, key=attrgetter('f'))
+        open_list.remove(node_current)
         if problem.isGoalState(node_current.pos):
             return node_current.actions
         successors = problem.getSuccessors(node_current.pos)
@@ -131,11 +138,30 @@ def aStarSearch(problem, heuristic=nullHeuristic):
             successor_pos = successor[0]
             successor_action = successor[1]
             successor_cost = successor[2]
-            successor_current_cost = node_current.g + successor_cost
-            get_pos = attrgetter('pos')
-            if successor_pos in [get_pos(ele) for ele in open_list]:
 
-            skip = False
+            node_successor = Node()
+            node_successor.pos = successor_pos
+            node_successor.parent = node_current
+            node_successor.actions = node_current.actions.append(successor_action)
+            node_successor.g = successor_current_cost
+            node_successor.h = heuristic(successor_pos)
+            node_successor.f = node_successor.g + node_successor.h
+            successor_current_cost = node_current.g + successor_cost
+            
+            if find_pos(successor_pos, open_list):
+               node = find_pos(successor_pos, open_list)
+               if node.g <= successor_current_cost:
+                continue
+            elif find_pos(successor_pos, closed_list):
+                node = find_pos(successor_pos, closed_list)
+                if node.g <= successor_current_cost:
+                    continue
+                open_list.remove(node)
+                closed_list.append(node)
+            else:
+                
+                open_list.append(node_successor)
+            
 
 
             for ele in open_list:
