@@ -174,7 +174,7 @@ class PositionSearchProblem(search.SearchProblem):
 
         successors = []
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
-            x,y = state
+            x, y = state
             dx, dy = Actions.directionToVector(action)
             nextx, nexty = int(x + dx), int(y + dy)
             if not self.walls[nextx][nexty]:
@@ -196,7 +196,7 @@ class PositionSearchProblem(search.SearchProblem):
         include an illegal move, return 999999.
         """
         if actions == None: return 999999
-        x,y= self.getStartState()
+        x, y= self.getStartState()
         cost = 0
         for action in actions:
             # Check figure out the next state and see whether its' legal

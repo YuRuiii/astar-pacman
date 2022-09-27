@@ -18,6 +18,16 @@ Pacman agents (in searchAgents.py).
 """
 
 import util
+from operator import attrgetter
+
+class State:
+    def __init__(self, pos, parent, action, cost, heuristic):
+        self.pos = (0, 0)
+        self.parent = parent
+        self.actions = parent.actions.append(action) if action and self.parent and self.parent.actions else []
+        self.g = parent.g + cost if parent else 0
+        self.h = heuristic(self.pos)
+        self.f = self.g + self.h
 
 class SearchProblem:
     """
@@ -85,6 +95,11 @@ def myHeuristic(state, problem=None):
     "*** YOUR CODE HERE ***"
     return 0
 
+def print_list(list):
+    for _, ele in enumerate(list):
+        print(ele.pos, end=" ")
+    print("")
+
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first.
 
@@ -99,7 +114,72 @@ def aStarSearch(problem, heuristic=nullHeuristic):
         print("Start's successors:", problem.getSuccessors(problem.getStartState()))
         """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    print("Start:", problem.getStartState())
+    print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
+    print("Start's successors:", problem.getSuccessors(problem.getStartState()))
+    print("(35,2) successor", problem.getSuccessors((35,2)))
+
+    # 1. initialize the open list and the closed list, put the starting node on the open
+    open_list = []
+    closed_list = []
+    start = State(
+        pos=problem.getStartState(), 
+        parent=None, 
+        cost=0, 
+        action=None,
+        heuristic=heuristic
+    )
+    open_list.append(start)
+
+    # 2. while the open list is not empty
+    while open_list:
+        # a) find the node with the least f on the open list, call it "q"
+        q = min(open_list, key=attrgetter('f'))
+        print_list(open_list)
+
+        # b) pop q off the open list
+        open_list.remove(q)
+
+        # c) generate q's successors and set their parents to q
+        q_successors = problem.getSuccessors(q.pos)
+
+        # d) for each successor
+        for s in q_successors:
+            s_pos = s[0]
+            s_action = s[1]
+            s_cost = s[2]
+
+            # i) if successor is the goal, stop search
+            # ii) else compute both g and h for the successor
+            state_s = State(pos=s_pos, parent=q, action=s_action, cost=s_cost, heuristic=heuristic)
+            if problem.isGoalState(state_s.pos):
+                return state_s.actions
+        
+            # iii) if a node with the same position as successor is in the OPEN list which has a lower f than successor, skip this successor
+            skip = False
+            for state_e in open_list:
+                if state_e.pos == state_s.pos and state_e.f < state_s.f:
+                    skip = True
+                    break
+            if skip:
+                continue
+
+            # iv) if a node with the same position as successor is in the CLOSED list which has a lower f than successor, skip this successor. otherwise, add the node to the open list
+            for state_e in open_list:
+                if state_e.pos == state_s.pos and state_e.f < state_s.f:
+                    skip = True
+                    break
+            if skip:
+                continue
+
+            open_list.append(state_s)
+
+        # e) push q on the closed list
+        closed_list.append(q)
+
+    exit(-1)
+    # util.raiseNotDefined()
 
 # Abbreviations
 astar = aStarSearch
