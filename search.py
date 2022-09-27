@@ -17,18 +17,8 @@ In search.py, you will implement generic search algorithms which are called by
 Pacman agents (in searchAgents.py).
 """
 
-from argparse import Action
 import util
-from operator import attrgetter
-
-class Node:
-    def __init__(self):
-        self.pos = (0, 0)
-        self.parent = None
-        self.actions = []
-        self.g = 0
-        self.h = 0
-        self.f = 0
+import math
 
 class SearchProblem:
     """
@@ -94,7 +84,7 @@ def myHeuristic(state, problem=None):
         you may need code other Heuristic function to replace  NullHeuristic
         """
     "*** YOUR CODE HERE ***"
-    return 0
+    return util.manhattanDistance(state, problem.goal)
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first.
@@ -110,71 +100,60 @@ def aStarSearch(problem, heuristic=nullHeuristic):
         print("Start's successors:", problem.getSuccessors(problem.getStartState()))
         """
     "*** YOUR CODE HERE ***"
-    def find_pos(pos, lst):
-        for node in lst:
-            if node.pos == pos:
-                return node
-        else:
-            return None
 
-    node_start = Node()
-    node_start.pos = problem.getStartState()
-    node_start.parent = None
-    node_start.actions = []
-    node_start.g = 0
-    node_start.h = heuristic(node_start.pos)
-    node_start.f = node_start.h
+    node_start = problem.getStartState()
     
     open_list = [node_start]
     closed_list = []
 
+    g = {node_start: 0}
+    h = {node_start: heuristic(node_start, problem)}
+    parent_info = {node_start: (None, None)}
+
     while open_list:
-        node_current = min(open_list, key=attrgetter('f'))
+        # Take from the open list the node node_current with the lowest f
+        node_current = None
+        for node in open_list:
+            min_f = math.inf
+            if g[node] + h[node] <= min_f:
+                node_current = node
+                min_f = g[node] + h[node]
         open_list.remove(node_current)
-        if problem.isGoalState(node_current.pos):
-            return node_current.actions
-        successors = problem.getSuccessors(node_current.pos)
+        if problem.isGoalState(node_current):
+            actions = []
+            node_p = node_current
+            while node_p in parent_info:
+                if parent_info[node_p] == (None, None): # no_parent
+                    break
+                actions.insert(0, parent_info[node_p][1])
+                node_p = parent_info[node_p][0]
+            return actions
+        successors = problem.getSuccessors(node_current)
         for successor in successors:
-            successor_pos = successor[0]
+            node_successor = successor[0]
             successor_action = successor[1]
             successor_cost = successor[2]
+            assert(node_current in g)
+            successor_current_cost = g[node_current] + successor_cost
 
-            node_successor = Node()
-            node_successor.pos = successor_pos
-            node_successor.parent = node_current
-            node_successor.actions = node_current.actions.append(successor_action)
-            node_successor.g = successor_current_cost
-            node_successor.h = heuristic(successor_pos)
-            node_successor.f = node_successor.g + node_successor.h
-            successor_current_cost = node_current.g + successor_cost
-            
-            if find_pos(successor_pos, open_list):
-               node = find_pos(successor_pos, open_list)
-               if node.g <= successor_current_cost:
-                continue
-            elif find_pos(successor_pos, closed_list):
-                node = find_pos(successor_pos, closed_list)
-                if node.g <= successor_current_cost:
+            if node_successor in open_list:
+                assert(node_successor in g)
+                if g[node_successor] <= successor_current_cost:
                     continue
-                open_list.remove(node)
-                closed_list.append(node)
+            elif node_successor in closed_list:
+                assert(node_successor in g)
+                if g[node_successor] <= successor_current_cost:
+                    continue
+                open_list.remove(node_successor)
+                closed_list.append(node_successor)
             else:
-                
                 open_list.append(node_successor)
-            
+                h[node_successor] = heuristic(node_successor, problem)
+            g[node_successor] = successor_current_cost
+            parent_info[node_successor] = (node_current, successor_action)
+        closed_list.append(node_current)
 
-
-            for ele in open_list:
-                if ele.pos == successor_pos and ele.g <= successor_current_cost:
-                    skip = True
-                    break
-            if skip:
-                continue
-            else:
-                for ele in closed_list:
-                    if ele.pos == successor_pos and ele.g <= successor_current_cost:
-                        closed_list.remove(ele)
-                        open_list.append(ele)
+    assert(0)
 
 # Abbreviations
 astar = aStarSearch
