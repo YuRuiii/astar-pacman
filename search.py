@@ -84,7 +84,7 @@ def myHeuristic(state, problem=None):
         you may need code other Heuristic function to replace  NullHeuristic
         """
     "*** YOUR CODE HERE ***"
-    return util.manhattanDistance(state, problem.goal)
+    return 8 * util.manhattanDistance(state, problem.goal)
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first.
@@ -108,10 +108,12 @@ def aStarSearch(problem, heuristic=nullHeuristic):
 
     g = {node_start: 0}
     h = {node_start: heuristic(node_start, problem)}
-    parent_info = {node_start: (None, None)}
+    success_relation = {}
+    parent_info = {node_start: (None, None)} # parent, action  
 
     while open_list:
-        # Take from the open list the node node_current with the lowest f
+        # print("open_list", open_list)
+        # print("closed_list", closed_list)
         node_current = None
         for node in open_list:
             min_f = math.inf
@@ -123,12 +125,20 @@ def aStarSearch(problem, heuristic=nullHeuristic):
             actions = []
             node_p = node_current
             while node_p in parent_info:
-                if parent_info[node_p] == (None, None): # no_parent
+                if parent_info[node_p] == (None, None): # no_parent, reach root
                     break
                 actions.insert(0, parent_info[node_p][1])
                 node_p = parent_info[node_p][0]
             return actions
-        successors = problem.getSuccessors(node_current)
+
+        if node_current[0] in success_relation:
+            successors = success_relation[node_current[0]]
+            print("yes")
+        else:
+            successors = problem.getSuccessors(node_current)
+            success_relation[node_current[0]] = successors
+            # print(success_relation.keys())
+        
         for successor in successors:
             node_successor = successor[0]
             successor_action = successor[1]
@@ -144,8 +154,8 @@ def aStarSearch(problem, heuristic=nullHeuristic):
                 assert(node_successor in g)
                 if g[node_successor] <= successor_current_cost:
                     continue
-                open_list.remove(node_successor)
-                closed_list.append(node_successor)
+                open_list.append(node_successor)
+                closed_list.remove(node_successor)
             else:
                 open_list.append(node_successor)
                 h[node_successor] = heuristic(node_successor, problem)
